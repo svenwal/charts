@@ -494,7 +494,9 @@ The name of the service used for the ingress controller's validation webhook
   imagePullPolicy: {{ .Values.image.pullPolicy }}
   env:
   {{- include "kong.env" . | nindent 2 }}
-  command: [ "/bin/sh", "-c", "until kong start; do echo 'waiting for db'; sleep 1; done; kong stop" ]
+{{/* TODO: the rm command here is a workaround for https://github.com/Kong/kong/issues/6827
+     It should be removed once that's fixed */}}
+  command: [ "/bin/sh", "-c", "until kong start; do echo 'waiting for db'; sleep 1; done; kong stop; rm {{ .Values.env.prefix | default "/usr/local/kong" }}/stream_rpc.sock" ]
   volumeMounts:
   {{- include "kong.volumeMounts" . | nindent 4 }}
   resources:
