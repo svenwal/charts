@@ -489,14 +489,15 @@ The name of the service used for the ingress controller's validation webhook
 {{- end -}}
 
 {{- define "kong.wait-for-db" -}}
+{{ $sockFile := (printf "%s/stream_rpc.sock" (default "/usr/local/kong" .Values.env.prefix)) }}
 - name: wait-for-db
   image: {{ include "kong.getRepoTag" .Values.image }}
   imagePullPolicy: {{ .Values.image.pullPolicy }}
   env:
   {{- include "kong.env" . | nindent 2 }}
-{{/* TODO: the rm command here is a workaround for https://github.com/Kong/kong/issues/6827
+{{/* TODO: the rm command here is a workaround for https://github.com/Kong/charts/issues/295
      It should be removed once that's fixed */}}
-  command: [ "/bin/sh", "-c", "until kong start; do echo 'waiting for db'; sleep 1; done; kong stop; rm {{ .Values.env.prefix | default "/usr/local/kong" }}/stream_rpc.sock" ]
+  command: [ "/bin/sh", "-c", "until kong start; do echo 'waiting for db'; sleep 1; done; kong stop; if [ -f {{ $sockFile }} ]; then rm {{ $sockFile }}; else true; fi"]
   volumeMounts:
   {{- include "kong.volumeMounts" . | nindent 4 }}
   resources:
